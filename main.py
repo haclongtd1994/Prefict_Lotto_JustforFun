@@ -7,7 +7,7 @@ from test_selenium import Interactive_Website
 import time
 
 #User defination
-MAX_TIMES = 80
+MAX_TIMES = 40
 URL_Link = "https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/winning-number-655"
 
 COUNTER = 0
@@ -55,10 +55,6 @@ while COUNTER < MAX_TIMES:
 		OFFICIALDATA[date] = BRAWDATA[COUNTER_CSV]
 		COUNTER_CSV += 1
 
-	# Clear all data in list a and b
-	ARAWDATA.clear()
-	BRAWDATA.clear()
-
 	#Using change page result
 	iw.Wait_page_load("xpath", "/html/body/div/div[5]/div/div/div[2]/div/div[2]/div/div/ul/li[7]/a", 10)
 	iw.Wait_page_load("xpath_click", "/html/body/div/div[5]/div/div/div[2]/div/div[2]/div/div/ul/li[7]/a", 10)
@@ -70,9 +66,53 @@ while COUNTER < MAX_TIMES:
 		lenOfPage = iw.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);var lenOfPage=document.body.scrollHeight;return lenOfPage;")
 		if lastCount==lenOfPage:
 			match=True
-	iw.Click_Event("atag","»")
+	# Execution Jquery to changed next page
+	cmd = "href = document.querySelector(\"a[href='javascript:NextPage({0});']\").href; \
+			window.location.href = href;".format(COUNTER+1)
+	iw.driver.execute_script(cmd)
+	time.sleep(2)
+	print("Debug: {}".format(COUNTER))
 	COUNTER += 1
 
 with open('lotto.csv', 'w') as data:
 	file = csv.writer(data)
 	file.writerows(OFFICIALDATA.items())
+
+def frequence(list):
+	global zc
+	BUFFED = []
+	# Get all element in list
+	for line in list:
+		buffer = line.split()
+		# Seperate number data by space
+		for bbuffer in buffer:
+			BUFFED.append(bbuffer)
+	# To count sequence number in data
+	STORED = Counter(BUFFED)
+	zc = len(STORED) # Store len of BUFFED
+
+	# Writesequence to file csv
+	with open('occurrence.csv', 'w') as data:
+		file = csv.writer(data)
+		file.writerows(STORED.items())
+
+def solution():
+	with open('occurrence.csv', 'r') as data:
+		fileReader = csv.reader(data)
+		for row in fileReader:
+			NUMBERS.append(row[0])
+			TIMES.append(row[1])
+			a = str((int(row[1]) / len(BRAWDATA)))
+			CHANCE.append(a[2:4])
+
+REPORT = {
+	'Number':NUMBERS,
+	'Times': TIMES,
+	'Chance': CHANCE,
+}
+
+frequence(BRAWDATA)
+solution()
+
+for key,val in REPORT:
+	print("{0}: {1}".format(key, val))
